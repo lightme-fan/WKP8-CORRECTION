@@ -1,14 +1,4 @@
-let songs = [
-    {
-        id: Date.now(),
-        score: '12',
-        title: 'Tontolo faharoa',
-        artist: 'AmbondronA',
-        style: 'Rock',
-        length: '4:03',
-        picture: 'https://bit.ly/3gWVjTd'
-    }
-];
+let songs = [];
 
 const songsList = document.querySelector('.song-list-container');
 const addSongForm = document.querySelector('.add-songs');
@@ -17,16 +7,40 @@ const filterStyleInput = document.querySelector('#filter-style');
 const filterForm = document.querySelector('.filter-songs');
 const resetFiltersBtn = document.querySelector('.reset-filters');
 
-const filterList = e => {};
+const filterList = e => {
+    showSongs(e, filterTitleInput.value, filterStyleInput.value);
+};
 
-const resetFilters = e => {};
+const resetFilters = e => {
+    const resetBtn = e.target;
+    console.log(resetBtn);
+    songsList.dispatchEvent(new CustomEvent('pleaseUpdateTheList'))
+};
 
 resetFiltersBtn.addEventListener('click', resetFilters);
 filterTitleInput.addEventListener('keyup', filterList);
 filterStyleInput.addEventListener('change', filterList);
 
 const showSongs = (event, filterTitle, filterStyle) => {
-    const html = songs.map(song =>
+    let sortedSongs = songs.sort((a, b) => b.score - a.score);
+    if (filterTitle) {
+        sortedSongs = songs.filter(song => {
+            let lowerCaseTitle = song.title.toLowerCase();
+            let lowerCaseFilterTitle = filterTitle.toLowerCase();
+            if (lowerCaseTitle.includes(lowerCaseFilterTitle)) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+    }
+
+    if (filterStyle) {
+        console.log(filterStyle);
+        sortedSongs = sortedSongs.filter(song => song.style == filterStyle);
+    }
+
+    const html = sortedSongs.map(song =>
     `
         <article class="song">
             <section>
@@ -69,21 +83,25 @@ const addSong = e => {
         picture: form.picture.value
     }
     songs.push(newSong);
+    form.reset();
     songsList.dispatchEvent(new CustomEvent('pleaseUpdateTheList'))
 };
 
 // event delegation for update and delete song buttons
 const handleClick = e => {
-    console.log(e.target.dataset.id);
     if (e.target.closest('button.increment-score')) {
-        const button = e.target;
+        const button = e.target.closest('button.increment-score');
+        console.log(button);
         const id = button.dataset.id;
+        console.log(id)
         updateSong(Number(id))
     }
 
     if (e.target.closest('button.delete')) {
-        const button = e.target;
+        const button = e.target.closest('button.delete');
+        console.log(button);
         const id = button.dataset.id;
+        console.log(id)
         updateSong(Number(id))
     }
 };
@@ -100,10 +118,21 @@ const deleteSong = idToDelete => {
 };
 
 // when we reload, we want to look inside the local storage and put them into songs
-const initLocalStorage = () => {};
+const initLocalStorage = () => {
+    const stringFromLs = localStorage.getItem('songs');
+    const listItem = JSON.parse(stringFromLs);
+    if (listItem) {
+        songs = listItem;
+    } else {
+        songs = [];
+    }
+    songsList.dispatchEvent(new CustomEvent('pleaseUpdateTheList'))
+};
 
 // we want to update the local storage each time we update, delete or add an attirbute
-const updateLocalStorage = () => {};
+const updateLocalStorage = () => {
+    localStorage.setItem('songs', JSON.stringify(songs));
+};
 
 addSongForm.addEventListener('submit', addSong);
 songsList.addEventListener('pleaseUpdateTheList', showSongs);
